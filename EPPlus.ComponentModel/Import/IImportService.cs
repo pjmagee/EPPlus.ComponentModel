@@ -1,5 +1,5 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IImporter.cs" company="Patrick Magee">
+// <copyright file="IImportService.cs" company="Patrick Magee">
 //   The MIT License (MIT)
 //   
 //   Copyright (c) 2014 Patrick Magee
@@ -23,7 +23,7 @@
 //   SOFTWARE.
 // </copyright>
 // <summary>
-//   The Importer interface.
+//   The ImportService interface.
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -32,21 +32,41 @@ namespace EPPlus.ComponentModel.Import
     using System.Collections.Generic;
 
     /// <summary>
-    /// The Importer interface.
+    /// The ImportService interface.
     /// </summary>
-    public interface IImporter
+    public interface IImportService
     {
         #region Public Methods and Operators
 
         /// <summary>
-        /// The get list.
+        /// Gets all the types found in any tables in the entire worksheet.
         /// </summary>
         /// <typeparam name="T">
         /// </typeparam>
         /// <returns>
-        /// The <see cref="IEnumerable"/>.
+        /// The <see cref="IEnumerable{T}"/> found in the entire workbook.
         /// </returns>
-        IEnumerable<T> GetList<T>();
+        IEnumerable<T> GetAll<T>();
+
+        /// <summary>
+        /// Gets all the types in tables specified in the given sheet name.
+        /// </summary>
+        /// <typeparam name="T">The type of object.</typeparam>
+        /// <param name="sheetName">The name of the sheet in the excel workbook.</param>
+        /// <returns>
+        /// The <see cref="IEnumerable{T}"/> found in all tabels of the given type in the given sheet.
+        /// </returns>
+        IEnumerable<T> GetListFromSheet<T>(string sheetName);
+
+        /// <summary>e
+        /// Gets all the types in the specified table name.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="tableName"></param>
+        /// <returns>
+        ///  The <see cref="IEnumerable{T}"/> found in the given table name.
+        /// </returns>
+        IEnumerable<T> GetListFromTable<T>(string tableName);
 
         #endregion
     }

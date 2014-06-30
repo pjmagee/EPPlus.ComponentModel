@@ -1,5 +1,5 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IExporter.cs" company="Patrick Magee">
+// <copyright file="IExportService.cs" company="Patrick Magee">
 //   The MIT License (MIT)
 //   
 //   Copyright (c) 2014 Patrick Magee
@@ -23,7 +23,7 @@
 //   SOFTWARE.
 // </copyright>
 // <summary>
-//   The Exporter interface.
+//   The ExportService interface.
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -32,9 +32,9 @@ namespace EPPlus.ComponentModel.Export
     using System.Collections.Generic;
 
     /// <summary>
-    /// The Exporter interface.
+    /// The ExportService interface.
     /// </summary>
-    public interface IExporter
+    public interface IExportService
     {
         #region Public Properties
 

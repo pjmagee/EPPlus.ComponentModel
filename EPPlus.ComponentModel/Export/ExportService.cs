@@ -1,5 +1,5 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Exporter.cs" company="Patrick Magee">
+// <copyright file="ExportService.cs" company="Patrick Magee">
 //   The MIT License (MIT)
 //   
 //   Copyright (c) 2014 Patrick Magee
@@ -23,7 +23,7 @@
 //   SOFTWARE.
 // </copyright>
 // <summary>
-//   The exporter.
+//   The ExportService.
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -37,9 +37,9 @@ namespace EPPlus.ComponentModel.Export
     using OfficeOpenXml;
 
     /// <summary>
-    /// The exporter.
+    /// The ExportService.
     /// </summary>
-    public class Exporter : IExporter, IDisposable
+    public class ExportService : IExportService, IDisposable
     {
         #region Fields
 
@@ -58,9 +58,9 @@ namespace EPPlus.ComponentModel.Export
         #region Constructors and Destructors
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Exporter"/> class.
+        /// Initializes a new instance of the <see cref="ExportService"/> class.
         /// </summary>
-        public Exporter()
+        public ExportService()
         {
             this.package = new ExcelPackage();
             this.worksheetConfigurations = new List<IWorksheetConfiguration>();

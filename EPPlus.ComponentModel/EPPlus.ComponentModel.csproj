@@ -53,12 +53,12 @@
     <Compile Include="Export\IObjectConfiguration.cs" />
     <Compile Include="Export\ITableConfiguration.T.cs" />
     <Compile Include="Export\ITableNavigatable.T.cs" />
-    <Compile Include="Import\Importer.cs" />
+    <Compile Include="Import\ImportService.cs" />
     <Compile Include="Export\IValidationOperatorValidator.cs" />
-    <Compile Include="Export\Exporter.cs" />
-    <Compile Include="Export\IExporter.cs" />
+    <Compile Include="Export\ExportService.cs" />
+    <Compile Include="Export\IExportService.cs" />
     <Compile Include="Export\IExportNavigatable.cs" />
-    <Compile Include="Import\IImporter.cs" />
+    <Compile Include="Import\IImportService.cs" />
     <Compile Include="Export\IObjectConfiguration.T.cs" />
     <Compile Include="Export\ITableConfiguration.cs" />
     <Compile Include="Export\ITableNavigatable.cs" />

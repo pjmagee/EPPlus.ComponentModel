@@ -52,26 +52,19 @@ namespace EPPlus.ComponentModel.Common
         public static DataTable ToDataTable(this ExcelTable table)
         {
             DataTable dataTable = new DataTable();
-            var headerRow =
-                table.WorkSheet.Cells[
-                    table.Address.Start.Row, 
-                    table.Address.Start.Column, 
-                    table.Address.Start.Row, 
-                    table.Address.End.Column];
 
-            foreach (var cell in headerRow)
+            var tableStartRow = table.Address.Start.Row;
+
+            var headerRow = table.WorkSheet.Cells[tableStartRow, table.Address.Start.Column, tableStartRow, table.Address.End.Column];
+
+            foreach (var header in headerRow)
             {
-                dataTable.Columns.Add(cell.Text);
+                dataTable.Columns.Add(header.Text);
             }
 
-            for (var rowIndex = table.Address.Start.Row + 2; rowIndex <= table.Address.End.Row; rowIndex++)
+            for (var rowIndex = table.Address.Start.Row + 1; rowIndex <= table.Address.End.Row; rowIndex++)
             {
-                var tableRow =
-                    table.WorkSheet.Cells[
-                        table.Address.Start.Row + 2, 
-                        table.Address.Start.Column, 
-                        rowIndex, 
-                        table.Address.End.Column];
+                var tableRow = table.WorkSheet.Cells[table.Address.Start.Row + 1, table.Address.Start.Column, rowIndex, table.Address.End.Column];
                 var dataRow = dataTable.NewRow();
 
                 foreach (var cell in tableRow)

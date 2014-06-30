@@ -48,9 +48,19 @@ namespace EPPlus.ComponentModel.Export
         #region Fields
 
         /// <summary>
-        /// The exporter.
+        /// The ExportService.
         /// </summary>
-        private readonly IExporter exporter;
+        private readonly IExportService exportService;
+
+        /// <summary>
+        /// Tables must have a unique table name. 
+        /// This stores the number of tables for each type, so that the next table name
+        /// can store the index of that type. 
+        /// </summary>
+        /// <example>
+        /// table_type_1, table_type_2
+        /// </example>
+        private readonly IDictionary<string, int> typeCount;
 
         /// <summary>
         /// The pluraliser for tables
@@ -74,19 +84,19 @@ namespace EPPlus.ComponentModel.Export
         /// <summary>
         /// Initializes a new instance of the <see cref="WorksheetConfiguration"/> class.
         /// </summary>
-        /// <param name="exporter">
-        /// The exporter.
+        /// <param name="exportService">
+        /// The ExportService.
         /// </param>
         /// <param name="worksheet">
         /// The worksheet.
         /// </param>
         /// <exception cref="ArgumentNullException">
         /// </exception>
-        public WorksheetConfiguration(IExporter exporter, ExcelWorksheet worksheet) : this()
+        public WorksheetConfiguration(IExportService exportService, ExcelWorksheet worksheet) : this()
         {
-            if (exporter == null)
+            if (exportService == null)
             {
-                throw new ArgumentNullException("exporter");
+                throw new ArgumentNullException("exportService");
             }
 
             if (worksheet == null)
@@ -94,7 +104,7 @@ namespace EPPlus.ComponentModel.Export
                 throw new ArgumentNullException("worksheet");
             }
 
-            this.exporter = exporter;
+            this.exportService = exportService;
             this.worksheet = worksheet;
         }
 
@@ -105,6 +115,7 @@ namespace EPPlus.ComponentModel.Export
         {
             this.pluralizationService = PluralizationService.CreateService(CultureInfo.CurrentCulture);
             this.tableConfigurations = new List<ITableConfiguration>();
+            this.typeCount = new Dictionary<string, int>();
         }
 
         #endregion
@@ -112,13 +123,13 @@ namespace EPPlus.ComponentModel.Export
         #region Public Properties
 
         /// <summary>
-        /// Gets the exporter.
+        /// Gets the ExportService.
         /// </summary>
-        public IExporter Exporter
+        public IExportService ExportService
         {
             get
             {
-                return this.exporter;
+                return this.exportService;
             }
         }
 
@@ -151,22 +162,14 @@ namespace EPPlus.ComponentModel.Export
         /// <returns>
         /// The <see cref="ITableConfiguration"/>.
         /// </returns>
-        public ITableConfiguration<T> AddTableForExport<T>(IEnumerable<T> collection, string tableName = null) 
+        public ITableConfiguration<T> AddTableForExport<T>(IEnumerable<T> collection, string tableName = null)
         {
             var rangeToFill = this.GetRangeToFill<T>();
-
             var dataTable = this.CreateDataTable(collection);
-
-            // var filledRange = rangeToFill.LoadFromCollection(
-            // collection, 
-            // PrintHeaders: true, 
-            // TableStyle: TableStyles.None);
             var filledRange = rangeToFill.LoadFromDataTable(dataTable, PrintHeaders: true);
-
             var table = this.CreateTable<T>(tableName, filledRange);
             this.worksheet.Cells[table.Address.Address].AutoFitColumns();
-            var configuration = this.CreateTableConfiguration<T>(table);
-            return configuration;
+            return this.CreateTableConfiguration<T>(table);
         }
 
         #endregion
@@ -226,14 +229,28 @@ namespace EPPlus.ComponentModel.Export
         private ExcelTable CreateTable<T>(string tableName, ExcelRangeBase filledRange)
         {
             var pluralName = this.pluralizationService.Pluralize(typeof(T).Name);
-            tableName = tableName == null ? pluralName : tableName + "_" + pluralName;
+           
+            var tableCount = 1;
 
-            var table = this.worksheet.Tables.Add(filledRange, tableName);
-            table.TableStyle = TableStyles.Dark1;
-            table.ShowHeader = true;
-            table.ShowFilter = true;
+            if (typeCount.ContainsKey(pluralName))
+            {
+                typeCount[pluralName] += 1;
+                tableCount = typeCount[pluralName];
+            }
+            else
+            {
+                typeCount[pluralName] = tableCount;
+            }
 
-            return table;
+            var identifer = string.Format(TableConfiguration<T>.TableKeyIdentifer, pluralName, tableCount);
+            tableName = tableName == null ? identifer : tableName + identifer;
+
+            var excelTable = this.worksheet.Tables.Add(filledRange, tableName);
+            excelTable.TableStyle = TableStyles.Dark1;
+            excelTable.ShowHeader = true;
+            excelTable.ShowFilter = true;
+
+            return excelTable;
         }
 
         /// <summary>
@@ -279,8 +296,8 @@ namespace EPPlus.ComponentModel.Export
         {
             var columns = this.GetColumns<T>();
 
-            return this.worksheet.Dimension == null ? 
-                this.worksheet.Cells[1, 1, 1, columns] : 
+            return this.worksheet.Dimension == null ?
+                this.worksheet.Cells[FromRow: 1, FromCol: 1, ToRow: 1, ToCol: columns] : 
                 this.worksheet.Cells[this.worksheet.Dimension.End.Row - 1, 1, this.worksheet.Dimension.End.Row, columns];
         }
 
@@ -298,12 +315,12 @@ namespace EPPlus.ComponentModel.Export
         }
 
         /// <summary>
-        /// The get range to fill.
+        /// It gets the correct ExcelRange to fill from by inserting new rows at the end of the current range.
+        /// This ensures there is an empty row between new tables being inserted into the spreadsheet. 
         /// </summary>
-        /// <typeparam name="T">
-        /// </typeparam>
+        /// <typeparam name="T">The type</typeparam>
         /// <returns>
-        /// The <see cref="ExcelRange"/>.
+        /// The <see cref="ExcelRange"/> that is to be filled from a collection or datatable.
         /// </returns>
         private ExcelRange GetRangeToFill<T>()
         {

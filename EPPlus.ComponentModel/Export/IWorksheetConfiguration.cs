@@ -39,9 +39,9 @@ namespace EPPlus.ComponentModel.Export
         #region Public Properties
 
         /// <summary>
-        /// Gets the exporter.
+        /// Gets the ExportService.
         /// </summary>
-        IExporter Exporter { get; }
+        IExportService ExportService { get; }
 
         /// <summary>
         /// Gets the table configurations.

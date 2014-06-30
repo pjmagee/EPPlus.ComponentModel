@@ -171,13 +171,13 @@ namespace EPPlus.ComponentModel.Export
         }
 
         /// <summary>
-        /// Gets the exporter.
+        /// Gets the ExportService.
         /// </summary>
-        public IExporter Exporter
+        public IExportService ExportService
         {
             get
             {
-                return this.WorksheetConfiguration.Exporter;
+                return this.WorksheetConfiguration.ExportService;
             }
         }
 

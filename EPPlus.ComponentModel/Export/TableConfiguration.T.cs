@@ -30,7 +30,6 @@
 namespace EPPlus.ComponentModel.Export
 {
     using System;
-    using System.Collections.Generic;
 
     using OfficeOpenXml.Table;
 
@@ -41,12 +40,17 @@ namespace EPPlus.ComponentModel.Export
     /// </typeparam>
     public class TableConfiguration<T> : ITableConfiguration<T>, ITableConfiguration
     {
-        #region Fields
+        /// <summary>
+        /// The table key identifer with index.
+        /// </summary>
+        public const string TableKeyIdentifer = "_{0}_{1}";
 
         /// <summary>
-        /// The collection.
+        /// The table key identifier
         /// </summary>
-        private readonly IEnumerable<T> collection;
+        public const string TableKey = "_{0}_";
+
+        #region Fields
 
         /// <summary>
         /// The options.
@@ -90,12 +94,13 @@ namespace EPPlus.ComponentModel.Export
                 throw new ArgumentNullException("table");
             }
 
+            this.table = table;
             this.worksheetConfiguration = worksheetConfiguration;
             this.options = new ObjectConfiguration<T>(table, this);
         }
 
         /// <summary>
-        /// Prevents a default instance of the <see cref="TableConfiguration"/> class from being created.
+        /// Prevents a default instance of the <see cref="TableConfiguration{T}"/> class from being created.
         /// </summary>
         private TableConfiguration()
         {
@@ -106,13 +111,13 @@ namespace EPPlus.ComponentModel.Export
         #region Public Properties
 
         /// <summary>
-        /// Gets the exporter.
+        /// Gets the ExportService.
         /// </summary>
-        public IExporter Exporter
+        public IExportService ExportService
         {
             get
             {
-                return this.worksheetConfiguration.Exporter;
+                return this.worksheetConfiguration.ExportService;
             }
         }
 
@@ -124,6 +129,14 @@ namespace EPPlus.ComponentModel.Export
             get
             {
                 return this.options;
+            }
+        }
+
+        public string TableName
+        {
+            get
+            {
+                return this.table.Name;
             }
         }
 

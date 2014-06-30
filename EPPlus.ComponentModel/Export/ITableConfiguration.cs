@@ -41,6 +41,8 @@ namespace EPPlus.ComponentModel.Export
         /// </summary>
         IObjectConfiguration Options { get; }
 
+        string TableName { get; }
+
         #endregion
     }
 }
