@@ -228,7 +228,8 @@ namespace EPPlus.ComponentModel.Export
         /// </returns>
         private ExcelTable CreateTable<T>(string tableName, ExcelRangeBase filledRange)
         {
-            var pluralName = this.pluralizationService.Pluralize(typeof(T).Name);
+            var type = typeof(T);
+            var pluralName = this.pluralizationService.Pluralize(type.Name);
            
             var tableCount = 1;
 
@@ -242,7 +243,7 @@ namespace EPPlus.ComponentModel.Export
                 typeCount[pluralName] = tableCount;
             }
 
-            var identifer = string.Format(TableConfiguration<T>.TableKeyIdentifer, pluralName, tableCount);
+            var identifer = TableConfiguration<T>.Key(worksheet.Name, tableName ?? string.Empty, pluralName, tableCount);
             tableName = tableName == null ? identifer : tableName + identifer;
 
             var excelTable = this.worksheet.Tables.Add(filledRange, tableName);

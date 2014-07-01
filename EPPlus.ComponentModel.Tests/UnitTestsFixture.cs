@@ -29,6 +29,7 @@
 
 namespace EPPlus.ComponentModel.Tests
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
 
@@ -40,15 +41,128 @@ namespace EPPlus.ComponentModel.Tests
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
+    using MSTestExtensions;
+
     /// <summary>
-    /// The unit test 1.
+    /// Exporting and Importing Tests Fixture
     /// </summary>
     [TestClass]
     public class UnitTestsFixture
     {
+        #region Test resources
+
+        /// <summary>
+        /// The export service.
+        /// </summary>
+        private ExportService exportService;
+
+        /// <summary>
+        /// The import service.
+        /// </summary>
+        private ImportService importService;
+
+        #endregion
+
+        [TestInitialize]
+        [Description("Before each test runs")]
+        public void TestInitialize()
+        {
+            exportService = new ExportService();
+        }
+
         [TestMethod]
-        [Description("Tests that exporting 10 orders results in importing 10 orders.")]
-        public void Exporting_One_Table_Test()
+        [Description("Exporting a sheet without a name results in an argument null exception")]
+        [TestCategory("Guard")]
+        public void Exporting_SheetName_Required_Test()
+        {
+            // Arrange
+
+            // Act
+
+            // Assert
+            ExceptionAssert.Throws<ArgumentNullException>(() => exportService.AddSheetForExport(null));
+        }
+
+        [TestMethod]
+        [Description("Exporting a table without a name results in the default name for that type")]
+        [TestCategory("1 x Sheet"), TestCategory("1 x Type"), TestCategory("1 x Table")]
+        public void Exporting_TableName_Test()
+        {
+            // Arrange
+            var sheet1 = exportService.AddSheetForExport("Sheet One");
+
+            // Act
+            var orders = Builder<Order>.CreateListOfSize(10).Build();
+            var table1 = sheet1.AddTableForExport<Order>(orders);
+
+            // Assert
+            Assert.AreEqual(
+                expected: "Sheet_One_Orders_1", 
+                actual: table1.TableName);
+        }
+
+        [TestMethod]
+        [Description("Exporting tables without a name results in the default name for that table type")]
+        [TestCategory("1 x Sheet"), TestCategory("1 x Type"), TestCategory("2 x Table")]
+        public void Exporting_TableName_Unique_Test()
+        {
+            // Arrange
+            var sheet1 = exportService.AddSheetForExport("Sheet One");
+
+            // Act
+            var orders = Builder<Order>.CreateListOfSize(10).Build();
+            var table1 = sheet1.AddTableForExport(orders);
+            var table2 = sheet1.AddTableForExport(orders);
+
+            // Assert
+            Assert.AreEqual(
+                expected: "Sheet_One_Orders_1", 
+                actual: table1.TableName);
+
+            Assert.AreEqual(
+                expected: "Sheet_One_Orders_2",
+                actual: table2.TableName);
+        }
+
+        [TestMethod]
+        [Description("Exporting tables without a name results in the default name for that table type")]
+        [TestCategory("1 x Sheet"), TestCategory("1 x Type"), TestCategory("2 x Table")]
+        public void Exporting_Multiple_Sheets_TableName_Unique_Test()
+        {
+            // Arrange
+            var orders = Builder<Order>.CreateListOfSize(10).Build();
+            var sheet1 = exportService.AddSheetForExport("Sheet One");
+            var sheet2 = exportService.AddSheetForExport("Sheet Two");
+
+            // Act
+            var sheet1Table1 = sheet1.AddTableForExport(orders);
+            var sheet1Table2 = sheet1.AddTableForExport(orders);
+
+            var sheet2Table1 = sheet2.AddTableForExport(orders);
+            var sheet2Table2 = sheet2.AddTableForExport(orders);
+
+            // Assert
+            Assert.AreEqual(
+                expected: "Sheet_One_Orders_1",
+                actual: sheet1Table1.TableName);
+
+            Assert.AreEqual(
+                expected: "Sheet_One_Orders_2",
+                actual: sheet1Table2.TableName);
+
+            Assert.AreEqual(
+                expected: "Sheet_Two_Orders_1",
+                actual: sheet2Table1.TableName);
+
+            Assert.AreEqual(
+                expected: "Sheet_Two_Orders_2",
+                actual: sheet2Table2.TableName);
+        }
+
+        [TestMethod]
+        [Description("Exporting all orders results in importing all orders.")]
+        [TestCategory("1 x Sheet"), TestCategory("1 x Table"), TestCategory("1 x Type")]
+        public void Exporting_One_Table_Type_Test()
         {
             // Arrange
             byte[] data;
@@ -56,25 +170,23 @@ namespace EPPlus.ComponentModel.Tests
             IEnumerable<Order> ordersToLoad = Enumerable.Empty<Order>();
 
             // Act
-            using (var exporter = new ExportService())
-            {
-                var sheet1 = exporter.AddSheetForExport("Sheet One");
-                sheet1.AddTableForExport(ordersToInsert);
-                data = exporter.Export();
-            }
+            var sheet1 = exportService.AddSheetForExport("Sheet One");
+            sheet1.AddTableForExport(ordersToInsert);
+            data = exportService.Export();
 
-            using (var importer = new ImportService(data))
-            {
-                ordersToLoad = importer.GetAll<Order>();
-            }
+            importService = new ImportService(data);
+            ordersToLoad = importService.GetAll<Order>();
 
             // Assert
-            Assert.AreEqual(expected: ordersToInsert.Count(), actual: ordersToLoad.Count());
+            Assert.AreEqual(
+                expected: ordersToInsert.Count(),
+                actual: ordersToLoad.Count());
         }
 
         [TestMethod]
-        [Description("Tests that exporting orders to two different tables results in importing all orders.")]
-        public void Exporting_Two_Tables_Test()
+        [Description("Exporting orders to two different tables results in importing all orders.")]
+        [TestCategory("1 x Sheet"), TestCategory("2 x Table"), TestCategory("1 x Type")]
+        public void Exporting_Two_Tables_Same_Type_Test()
         {
             // Arrange
             byte[] data;
@@ -83,24 +195,121 @@ namespace EPPlus.ComponentModel.Tests
             IEnumerable<Order> ordersToLoad = Enumerable.Empty<Order>();
 
             // Act
-            using (var exporter = new ExportService())
-            {
-                var sheet1 = exporter.AddSheetForExport("Sheet One");
-                sheet1.AddTableForExport(firstOrders);
-                sheet1.AddTableForExport(secondOrders);
-                data = exporter.Export();
-            }
+            var sheet1 = exportService.AddSheetForExport("Sheet One");
+            sheet1.AddTableForExport(firstOrders);
+            sheet1.AddTableForExport(secondOrders);
+            data = exportService.Export();
 
-            using (var importer = new ImportService(data))
-            {
-                ordersToLoad = importer.GetAll<Order>();
-            }
+            importService = new ImportService(data);
+            ordersToLoad = importService.GetAll<Order>();
 
             // Assert
             var totalOrders = firstOrders.Concat(secondOrders);
 
-            Assert.AreEqual(expected: totalOrders.Count(), actual: ordersToLoad.Count());
+            Assert.AreEqual(
+                expected: totalOrders.Count(),
+                actual: ordersToLoad.Count());
 
         }
+
+        [TestMethod]
+        [Description("Exporting two types results in importing both of all types")]
+        [TestCategory("2 x Type"), TestCategory("3 x Table"), TestCategory("1 x Sheet")]
+        public void Exporting_Three_Tables_Two_Types_Test()
+        {
+            // Arrange
+            byte[] data;
+            IEnumerable<Order> firstOrders = Builder<Order>.CreateListOfSize(10).Build();
+            IEnumerable<Order> secondOrders = Builder<Order>.CreateListOfSize(10).Build();
+            IEnumerable<Order> ordersToLoad = Enumerable.Empty<Order>();
+
+            IEnumerable<Person> firstPeople = Builder<Person>.CreateListOfSize(10).Build();
+            IEnumerable<Person> peopleToLoad = Enumerable.Empty<Person>();
+
+            // Act
+            var sheet1 = exportService.AddSheetForExport("Sheet One");
+            sheet1.AddTableForExport(firstOrders);
+            sheet1.AddTableForExport(secondOrders);
+            sheet1.AddTableForExport(firstPeople);
+            data = exportService.Export();
+
+            importService = new ImportService(data);
+            ordersToLoad = importService.GetAll<Order>();
+            peopleToLoad = importService.GetAll<Person>();
+
+            // Assert
+            var totalOrders = firstOrders.Concat(secondOrders);
+
+            Assert.AreEqual(
+                expected: totalOrders.Count(),
+                actual: ordersToLoad.Count(),
+                message: "The total orders exported do not add up to the total orders imported.");
+
+            Assert.AreEqual(
+                expected: firstPeople.Count(),
+                actual: peopleToLoad.Count(),
+                message: "The total people exported do not add up to the total people imported.");
+        }
+
+        [TestMethod]
+        [Description("Exporting two types results in importing both of all types")]
+        [TestCategory("1 x Type"), TestCategory("2 x Table"), TestCategory("2 x Sheet")]
+        public void Exporting_Two_Sheets_One_Type_Test()
+        {
+            // Arrange
+            byte[] data;
+            IEnumerable<Order> firstOrders = Builder<Order>.CreateListOfSize(10).Build();
+            IEnumerable<Order> secondOrders = Builder<Order>.CreateListOfSize(10).Build();
+            IEnumerable<Order> ordersToLoad = Enumerable.Empty<Order>();
+
+            // Act
+            var sheet1 = exportService.AddSheetForExport("Sheet One");
+            sheet1.AddTableForExport(firstOrders);
+
+            var sheet2 = exportService.AddSheetForExport("Sheet Two");
+            sheet2.AddTableForExport(firstOrders);
+
+            data = exportService.Export();
+            importService = new ImportService(data);
+            ordersToLoad = importService.GetAll<Order>();
+
+            // Assert
+            var totalOrders = firstOrders.Concat(secondOrders);
+
+            Assert.AreEqual(
+                expected: totalOrders.Count(),
+                actual: ordersToLoad.Count(),
+                message: "The total orders exported to two sheets do not add up to the total orders imported.");
+        }
+
+        [TestCleanup]
+        [Description("Run after each unit test and clean up any left over resources")]
+        public void TestCleanUp()
+        {
+            if (importService != null)
+            {
+                try
+                {
+                    importService.Dispose();
+                }
+                finally
+                {
+                    importService = null;
+                }
+            }
+
+            if (exportService != null)
+            {
+                try
+                {
+                    exportService.Dispose();
+                }
+                finally
+                {
+                    exportService = null;
+                }
+            }
+        }
+
     }
 }

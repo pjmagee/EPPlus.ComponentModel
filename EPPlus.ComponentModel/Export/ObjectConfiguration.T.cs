@@ -130,7 +130,7 @@ namespace EPPlus.ComponentModel.Export
         }
 
         /// <summary>
-        /// Prevents a default instance of the <see cref="ObjectConfiguration"/> class from being created.
+        /// Prevents a default instance of the <see cref="ObjectConfiguration{T}"/> class from being created.
         /// </summary>
         private ObjectConfiguration()
         {

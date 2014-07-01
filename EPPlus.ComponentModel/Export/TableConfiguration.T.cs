@@ -41,11 +41,6 @@ namespace EPPlus.ComponentModel.Export
     public class TableConfiguration<T> : ITableConfiguration<T>, ITableConfiguration
     {
         /// <summary>
-        /// The table key identifer with index.
-        /// </summary>
-        public const string TableKeyIdentifer = "_{0}_{1}";
-
-        /// <summary>
         /// The table key identifier
         /// </summary>
         public const string TableKey = "_{0}_";
@@ -167,5 +162,50 @@ namespace EPPlus.ComponentModel.Export
         }
 
         #endregion
+
+        /// <summary>
+        /// The table key identifer that takes into account:
+        /// {0}: sheet name
+        /// {1}: table name
+        /// {2}: plural type name
+        /// {3}: total table count
+        /// </summary>
+        /// <param name="worksheetName">
+        /// The worksheet Name.
+        /// </param>
+        /// <param name="tableName">
+        /// The table Name.
+        /// </param>
+        /// <param name="pluralTypeName">
+        /// The plural Type Name.
+        /// </param>
+        /// <param name="count">
+        /// The count.
+        /// </param>
+        /// <returns>
+        /// The <see cref="string"/>.
+        /// </returns>
+        public static string Key(string worksheetName, string tableName, string pluralTypeName, int count)
+        {
+            if (worksheetName == null)
+            {
+                throw new ArgumentNullException("worksheetName");
+            }
+
+            if (tableName == null)
+            {
+                throw new ArgumentNullException("tableName");
+            }
+
+            if (pluralTypeName == null)
+            {
+                throw new ArgumentNullException("pluralTypeName");
+            }
+
+            worksheetName = worksheetName.Replace(" ", "_");
+            tableName = tableName.Replace(" ", "_");
+
+            return string.Format("{0}_{1}_{2}_{3}", worksheetName, tableName, pluralTypeName, count).Replace("__", "_");
+        }
     }
 }

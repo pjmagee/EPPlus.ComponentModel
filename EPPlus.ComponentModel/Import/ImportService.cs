@@ -149,7 +149,7 @@ namespace EPPlus.ComponentModel.Import
 
             var tables = (from worksheet in this.package.Workbook.Worksheets
                           from table in worksheet.Tables
-                          where table.Name.Contains("_" + info.PluralTypeName + "_")
+                          where table.Name.Contains(info.PluralTypeName)
                           select table).ToList();
 
             return this.GetTypesFromTables<T>(tables, info).ToList();
@@ -174,8 +174,10 @@ namespace EPPlus.ComponentModel.Import
         {
             if (sheetName == null)
             {
-                throw new ArgumentNullException("tableName");
+                throw new ArgumentNullException("sheetName");
             }
+
+            sheetName = sheetName.Replace(" ", "_");
 
             var info = this.GetOrCreate<T>();
 
@@ -204,6 +206,8 @@ namespace EPPlus.ComponentModel.Import
             {
                 throw new ArgumentNullException("tableName");
             }
+
+            tableName = tableName.Replace(" ", "_");
 
             var info = this.GetOrCreate<T>();
             var tableKey = string.Format(TableConfiguration<T>.TableKey, info.PluralTypeName);
@@ -289,6 +293,11 @@ namespace EPPlus.ComponentModel.Import
         /// </summary>
         private class CachedTypeInformation
         {
+            /// <summary>
+            /// The cached type informations.
+            /// </summary>
+            private static Dictionary<Type, CachedTypeInformation> CachedTypeInformations;
+
             #region Constructors and Destructors
 
             /// <summary>
@@ -303,11 +312,19 @@ namespace EPPlus.ComponentModel.Import
             /// <param name="typeName">
             /// The type name.
             /// </param>
-            public CachedTypeInformation(string pluralTypeName, PropertyInfo[] properties, string typeName)
+            private CachedTypeInformation(string pluralTypeName, PropertyInfo[] properties, string typeName)
             {
                 this.PluralTypeName = pluralTypeName;
                 this.Properties = properties;
                 this.TypeName = typeName;
+            }
+
+            /// <summary>
+            /// Initializes static members of the <see cref="CachedTypeInformation"/> class.
+            /// </summary>
+            static CachedTypeInformation()
+            {
+                CachedTypeInformations = new Dictionary<Type, CachedTypeInformation>();
             }
 
             #endregion
@@ -317,35 +334,21 @@ namespace EPPlus.ComponentModel.Import
             /// <summary>
             /// Gets or sets the plural type name.
             /// </summary>
-            public string PluralTypeName { get; set; }
+            internal string PluralTypeName { get; set; }
 
             /// <summary>
             /// Gets or sets the properties.
             /// </summary>
-            public PropertyInfo[] Properties { get; set; }
+            internal PropertyInfo[] Properties { get; set; }
 
             /// <summary>
             /// Gets or sets the type name.
             /// </summary>
-            public string TypeName { get; set; }
+            internal string TypeName { get; set; }
 
             #endregion
 
             #region Public Methods and Operators
-
-            /// <summary>
-            /// Gets the cached type information object from the given generic T.
-            /// </summary>
-            /// <typeparam name="T">
-            /// </typeparam>
-            /// <returns>
-            /// The <see cref="CachedTypeInformation"/>.
-            /// </returns>
-            public static CachedTypeInformation From<T>()
-            {
-                var type = typeof(T);
-                return new CachedTypeInformation(PluralizationService.Pluralize(type.Name), type.GetProperties(), type.Name);
-            }
 
             /// <summary>
             /// Gets the cached type information object from the given type.
@@ -354,7 +357,15 @@ namespace EPPlus.ComponentModel.Import
             /// <returns></returns>
             public static CachedTypeInformation From(Type type)
             {
-                return new CachedTypeInformation(PluralizationService.Pluralize(type.Name), type.GetProperties(), type.Name);
+                CachedTypeInformation typeInformation;
+
+                if (!CachedTypeInformations.TryGetValue(type, out typeInformation))
+                {
+                    typeInformation = new CachedTypeInformation(PluralizationService.Pluralize(type.Name), type.GetProperties(), type.Name);
+                    CachedTypeInformations[type] = typeInformation;
+                }
+
+                return typeInformation;
             }
 
             #endregion
