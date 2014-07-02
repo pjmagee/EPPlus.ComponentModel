@@ -492,11 +492,16 @@ namespace EPPlus.ComponentModel.Tests
         /// <param name="path">The path to save the file.</param>
         private void SaveToFile(byte[] data, string path = @"C:\\Temp\\Test.xlsx")
         {
-            using (var stream = new MemoryStream(data))
+            var isBuildServer = Environment.GetEnvironmentVariable("APPVEYOR") != null;
+
+            if (!isBuildServer)
             {
-                using (var package = new ExcelPackage(stream))
+                using (var stream = new MemoryStream(data))
                 {
-                    package.SaveAs(new FileInfo(path));
+                    using (var package = new ExcelPackage(stream))
+                    {
+                        package.SaveAs(new FileInfo(path));
+                    }
                 }
             }
         }
