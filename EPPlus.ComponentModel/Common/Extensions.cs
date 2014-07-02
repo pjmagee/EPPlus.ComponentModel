@@ -29,7 +29,11 @@
 
 namespace EPPlus.ComponentModel.Common
 {
+    using System;
+    using System.Collections.Generic;
     using System.Data;
+    using System.Globalization;
+    using System.Linq;
 
     using OfficeOpenXml.Table;
 
@@ -73,6 +77,38 @@ namespace EPPlus.ComponentModel.Common
                 }
 
                 dataTable.Rows.Add(dataRow);
+            }
+
+            return dataTable;
+        }
+
+        public static DataTable ToDataTable<T>(this IEnumerable<T> collection, string tableName = null)
+        {
+            Type type = typeof(T);
+            DataTable dataTable = new DataTable(tableName ?? type.Name);
+            var properties = type.GetProperties();
+
+            foreach (var property in properties)
+            {
+                // Adding metadata here can change the way EPPlus will fill in the cells.
+                dataTable.Columns.Add(property.Name);
+            }
+
+            foreach (var item in collection)
+            {
+                var dataRow = dataTable.NewRow();
+
+                foreach (var property in properties)
+                {
+                    dataRow[property.Name] = property.GetValue(item).ToString();
+                }
+
+                dataTable.Rows.Add(dataRow);
+            }
+
+            if (dataTable.Rows.Count != collection.Count())
+            {
+                throw new Exception("DataTable conversion invalid.");
             }
 
             return dataTable;

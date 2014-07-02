@@ -41,7 +41,6 @@ namespace EPPlus.ComponentModel.Import
     using System.Reflection;
 
     using EPPlus.ComponentModel.Common;
-    using EPPlus.ComponentModel.Export;
 
     using OfficeOpenXml;
     using OfficeOpenXml.Table;
@@ -90,8 +89,7 @@ namespace EPPlus.ComponentModel.Import
         /// <param name="data">
         /// The data.
         /// </param>
-        public ImportService(byte[] data)
-            : this()
+        public ImportService(byte[] data) : this()
         {
             this.package = new ExcelPackage(new MemoryStream(data));
         }
@@ -102,8 +100,7 @@ namespace EPPlus.ComponentModel.Import
         /// <param name="path">
         /// The path.
         /// </param>
-        public ImportService(string path)
-            : this()
+        public ImportService(string path) : this()
         {
             var data = File.ReadAllBytes(path);
             this.package = new ExcelPackage(new MemoryStream(data));
@@ -147,10 +144,10 @@ namespace EPPlus.ComponentModel.Import
         {
             var info = this.GetOrCreate<T>();
 
-            var tables = (from worksheet in this.package.Workbook.Worksheets
-                          from table in worksheet.Tables
-                          where table.Name.Contains(info.PluralTypeName)
-                          select table).ToList();
+            var tables = from worksheet in this.package.Workbook.Worksheets
+                         from table in worksheet.Tables
+                         where table.Name.Contains(info.PluralTypeName)
+                         select table;
 
             return this.GetTypesFromTables<T>(tables, info).ToList();
         }
@@ -210,8 +207,6 @@ namespace EPPlus.ComponentModel.Import
             tableName = tableName.Replace(" ", "_");
 
             var info = this.GetOrCreate<T>();
-            var tableKey = string.Format(TableConfiguration<T>.TableKey, info.PluralTypeName);
-            tableName = tableKey.Contains(tableName) ? tableKey : tableName + "_" + tableKey;
 
             var tables = from sheet in this.package.Workbook.Worksheets
                          from table in sheet.Tables
@@ -293,12 +288,24 @@ namespace EPPlus.ComponentModel.Import
         /// </summary>
         private class CachedTypeInformation
         {
+            #region Static Fields
+
             /// <summary>
             /// The cached type informations.
             /// </summary>
             private static Dictionary<Type, CachedTypeInformation> CachedTypeInformations;
 
+            #endregion
+
             #region Constructors and Destructors
+
+            /// <summary>
+            /// Initializes static members of the <see cref="CachedTypeInformation"/> class.
+            /// </summary>
+            static CachedTypeInformation()
+            {
+                CachedTypeInformations = new Dictionary<Type, CachedTypeInformation>();
+            }
 
             /// <summary>
             /// Initializes a new instance of the <see cref="CachedTypeInformation"/> class.
@@ -319,17 +326,9 @@ namespace EPPlus.ComponentModel.Import
                 this.TypeName = typeName;
             }
 
-            /// <summary>
-            /// Initializes static members of the <see cref="CachedTypeInformation"/> class.
-            /// </summary>
-            static CachedTypeInformation()
-            {
-                CachedTypeInformations = new Dictionary<Type, CachedTypeInformation>();
-            }
-
             #endregion
 
-            #region Public Properties
+            #region Properties
 
             /// <summary>
             /// Gets or sets the plural type name.
@@ -353,15 +352,21 @@ namespace EPPlus.ComponentModel.Import
             /// <summary>
             /// Gets the cached type information object from the given type.
             /// </summary>
-            /// <param name="type"></param>
-            /// <returns></returns>
+            /// <param name="type">
+            /// </param>
+            /// <returns>
+            /// The <see cref="CachedTypeInformation"/>.
+            /// </returns>
             public static CachedTypeInformation From(Type type)
             {
                 CachedTypeInformation typeInformation;
 
                 if (!CachedTypeInformations.TryGetValue(type, out typeInformation))
                 {
-                    typeInformation = new CachedTypeInformation(PluralizationService.Pluralize(type.Name), type.GetProperties(), type.Name);
+                    typeInformation = new CachedTypeInformation(
+                        PluralizationService.Pluralize(type.Name), 
+                        type.GetProperties(), 
+                        type.Name);
                     CachedTypeInformations[type] = typeInformation;
                 }
 

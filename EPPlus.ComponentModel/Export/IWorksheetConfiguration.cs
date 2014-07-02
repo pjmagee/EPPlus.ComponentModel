@@ -41,12 +41,20 @@ namespace EPPlus.ComponentModel.Export
         /// <summary>
         /// Gets the ExportService.
         /// </summary>
+        /// <remarks>
+        /// The export service that is associated with this worksheet configuration.
+        /// </remarks>
         IExportService ExportService { get; }
 
         /// <summary>
         /// Gets the table configurations.
         /// </summary>
         IEnumerable<ITableConfiguration> TableConfigurations { get; }
+
+        /// <summary>
+        /// Gets the worksheet name.
+        /// </summary>
+        string WorksheetName { get; }
 
         #endregion
 

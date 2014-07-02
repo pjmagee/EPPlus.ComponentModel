@@ -34,6 +34,8 @@ namespace EPPlus.ComponentModel.Export
     using System.IO;
     using System.Linq;
 
+    using EPPlus.ComponentModel.Exceptions;
+
     using OfficeOpenXml;
 
     /// <summary>
@@ -100,7 +102,7 @@ namespace EPPlus.ComponentModel.Export
         {
             if (this.package.Workbook.Worksheets.Any(ws => ws.Name == sheetName))
             {
-                throw new Exception(string.Format("Sheet {0} already exists", sheetName));
+                throw new SheetNameExistsException(string.Format("Sheet {0} already exists", sheetName));
             }
 
             var worksheet = this.package.Workbook.Worksheets.Add(sheetName);
@@ -132,6 +134,7 @@ namespace EPPlus.ComponentModel.Export
         public byte[] Export()
         {
             this.AddValidations();
+            this.AutoFormatColumns();
             return this.package.GetAsByteArray();
         }
 
@@ -144,12 +147,27 @@ namespace EPPlus.ComponentModel.Export
         public void Export(string path)
         {
             this.AddValidations();
+            this.AutoFormatColumns();
             this.package.SaveAs(new FileInfo(path));
         }
 
         #endregion
 
         #region Methods
+
+        /// <summary>
+        /// Auto format the worksheets.
+        /// </summary>
+        private void AutoFormatColumns()
+        {
+            foreach (var workSheet in this.package.Workbook.Worksheets)
+            {
+                if (workSheet.Dimension != null)
+                {
+                    workSheet.Cells[workSheet.Dimension.Address].AutoFitColumns();    
+                }
+            }
+        }
 
         /// <summary>
         /// The add validations.

@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\Extensions.cs" />
+    <Compile Include="Exceptions\SheetNameExistsException.cs" />
     <Compile Include="Export\IObjectConfiguration.cs" />
     <Compile Include="Export\ITableConfiguration.T.cs" />
     <Compile Include="Export\ITableNavigatable.T.cs" />

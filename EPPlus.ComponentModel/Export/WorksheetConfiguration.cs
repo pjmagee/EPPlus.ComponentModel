@@ -37,6 +37,8 @@ namespace EPPlus.ComponentModel.Export
     using System.Linq;
     using System.Reflection;
 
+    using EPPlus.ComponentModel.Common;
+
     using OfficeOpenXml;
     using OfficeOpenXml.Table;
 
@@ -60,7 +62,7 @@ namespace EPPlus.ComponentModel.Export
         /// <example>
         /// table_type_1, table_type_2
         /// </example>
-        private readonly IDictionary<string, int> typeCount;
+        private readonly IDictionary<Type, int> typeCount;
 
         /// <summary>
         /// The pluraliser for tables
@@ -115,7 +117,7 @@ namespace EPPlus.ComponentModel.Export
         {
             this.pluralizationService = PluralizationService.CreateService(CultureInfo.CurrentCulture);
             this.tableConfigurations = new List<ITableConfiguration>();
-            this.typeCount = new Dictionary<string, int>();
+            this.typeCount = new Dictionary<Type, int>();
         }
 
         #endregion
@@ -144,6 +146,17 @@ namespace EPPlus.ComponentModel.Export
             }
         }
 
+        /// <summary>
+        /// Gets the worksheet name.
+        /// </summary>
+        public string WorksheetName
+        {
+            get
+            {
+                return this.worksheet.Name;
+            }
+        }
+
         #endregion
 
         #region Public Methods and Operators
@@ -164,11 +177,14 @@ namespace EPPlus.ComponentModel.Export
         /// </returns>
         public ITableConfiguration<T> AddTableForExport<T>(IEnumerable<T> collection, string tableName = null)
         {
+            var key = this.GetKey<T>(tableName ?? string.Empty);
             var rangeToFill = this.GetRangeToFill<T>();
-            var dataTable = this.CreateDataTable(collection);
-            var filledRange = rangeToFill.LoadFromDataTable(dataTable, PrintHeaders: true);
-            var table = this.CreateTable<T>(tableName, filledRange);
-            this.worksheet.Cells[table.Address.Address].AutoFitColumns();
+            var dataTable = collection.ToDataTable(key);
+
+            // Load from dataTable will set the table name from the table name set on the dataTable
+            var filledRange = rangeToFill.LoadFromDataTable(dataTable, PrintHeaders: true, TableStyle: TableStyles.Dark1);
+            FormatDates(filledRange, dataTable);
+            var table = worksheet.Tables[key];
             return this.CreateTableConfiguration<T>(table);
         }
 
@@ -176,82 +192,14 @@ namespace EPPlus.ComponentModel.Export
 
         #region Methods
 
-        /// <summary>
-        /// The create data table.
-        /// </summary>
-        /// <param name="collection">
-        /// The collection.
-        /// </param>
-        /// <typeparam name="T">
-        /// </typeparam>
-        /// <returns>
-        /// The <see cref="DataTable"/>.
-        /// </returns>
-        private DataTable CreateDataTable<T>(IEnumerable<T> collection)
+        private void FormatDates(ExcelRangeBase range, DataTable table)
         {
-            DataTable dataTable = new DataTable(typeof(T).Name);
-            var properties = this.GetProperties<T>();
+            var columns = from DataColumn d in table.Columns where d.DataType == typeof(DateTime) || d.ColumnName.Contains("Date") select d.Ordinal + 1;
 
-            foreach (var property in properties)
+            foreach (var column in columns)
             {
-                dataTable.Columns.Add(property.Name);
+                worksheet.Cells[range.Start.Row + 1, column, range.End.Row, column].Style.Numberformat.Format = "dd/mm/yyyy";
             }
-
-            foreach (var item in collection)
-            {
-                var dataRow = dataTable.NewRow();
-
-                foreach (var property in properties)
-                {
-                    dataRow[property.Name] = property.GetValue(item).ToString();
-                }
-
-                dataTable.Rows.Add(dataRow);
-            }
-
-            return dataTable;
-        }
-
-        /// <summary>
-        /// The create table.
-        /// </summary>
-        /// <param name="tableName">
-        /// The table name.
-        /// </param>
-        /// <param name="filledRange">
-        /// The filled range.
-        /// </param>
-        /// <typeparam name="T">
-        /// </typeparam>
-        /// <returns>
-        /// The <see cref="ExcelTable"/>.
-        /// </returns>
-        private ExcelTable CreateTable<T>(string tableName, ExcelRangeBase filledRange)
-        {
-            var type = typeof(T);
-            var pluralName = this.pluralizationService.Pluralize(type.Name);
-           
-            var tableCount = 1;
-
-            if (typeCount.ContainsKey(pluralName))
-            {
-                typeCount[pluralName] += 1;
-                tableCount = typeCount[pluralName];
-            }
-            else
-            {
-                typeCount[pluralName] = tableCount;
-            }
-
-            var identifer = TableConfiguration<T>.Key(worksheet.Name, tableName ?? string.Empty, pluralName, tableCount);
-            tableName = tableName == null ? identifer : tableName + identifer;
-
-            var excelTable = this.worksheet.Tables.Add(filledRange, tableName);
-            excelTable.TableStyle = TableStyles.Dark1;
-            excelTable.ShowHeader = true;
-            excelTable.ShowFilter = true;
-
-            return excelTable;
         }
 
         /// <summary>
@@ -273,49 +221,6 @@ namespace EPPlus.ComponentModel.Export
         }
 
         /// <summary>
-        /// The get columns.
-        /// </summary>
-        /// <typeparam name="T">
-        /// </typeparam>
-        /// <returns>
-        /// The <see cref="int"/>.
-        /// </returns>
-        private int GetColumns<T>()
-        {
-            return typeof(T).GetProperties().Count();
-        }
-
-        /// <summary>
-        /// The get end range.
-        /// </summary>
-        /// <typeparam name="T">
-        /// </typeparam>
-        /// <returns>
-        /// The <see cref="ExcelRange"/>.
-        /// </returns>
-        private ExcelRange GetEndRange<T>()
-        {
-            var columns = this.GetColumns<T>();
-
-            return this.worksheet.Dimension == null ?
-                this.worksheet.Cells[FromRow: 1, FromCol: 1, ToRow: 1, ToCol: columns] : 
-                this.worksheet.Cells[this.worksheet.Dimension.End.Row - 1, 1, this.worksheet.Dimension.End.Row, columns];
-        }
-
-        /// <summary>
-        /// The get properties.
-        /// </summary>
-        /// <typeparam name="T">
-        /// </typeparam>
-        /// <returns>
-        /// The <see cref="PropertyInfo[]"/>.
-        /// </returns>
-        private PropertyInfo[] GetProperties<T>()
-        {
-            return typeof(T).GetProperties().OrderBy(p => p.Name.Length).ToArray();
-        }
-
-        /// <summary>
         /// It gets the correct ExcelRange to fill from by inserting new rows at the end of the current range.
         /// This ensures there is an empty row between new tables being inserted into the spreadsheet. 
         /// </summary>
@@ -325,10 +230,49 @@ namespace EPPlus.ComponentModel.Export
         /// </returns>
         private ExcelRange GetRangeToFill<T>()
         {
-            var currentRange = this.GetEndRange<T>();
-            this.worksheet.InsertRow(currentRange.End.Row, 2);
-            var rangeToFill = this.GetEndRange<T>();
-            return rangeToFill;
+            var isEmpty = this.worksheet.Dimension == null;
+            this.worksheet.InsertRow(isEmpty ? 1 : this.worksheet.Dimension.End.Row, 2);
+            return this.worksheet.Cells[isEmpty ? 1 : this.worksheet.Dimension.End.Row, 1];
+        }
+
+        /// <summary>
+        /// The get key.
+        /// </summary>
+        /// <param name="tableName">
+        /// The table name.
+        /// </param>
+        /// <typeparam name="T">
+        /// </typeparam>
+        /// <returns>
+        /// The <see cref="string"/>.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// </exception>
+        public string GetKey<T>(string tableName)
+        {
+            if (tableName == null)
+            {
+                throw new ArgumentNullException("tableName");
+            }
+
+            var type = typeof(T);
+            var count = 1;
+
+            if (!typeCount.ContainsKey(type))
+            {
+                typeCount[type] = 1;
+            }
+            else
+            {
+                count = typeCount[type] + 1;
+                typeCount[type] = count;
+            }
+
+            tableName = tableName.Replace(" ", "_");
+            var sheetName = WorksheetName.Replace(" ", "_");
+            var plural = pluralizationService.Pluralize(typeof(T).Name);
+
+            return string.Format("{0}_{1}_{2}_{3}", sheetName, tableName, plural, count).Replace("__", "_");
         }
 
         #endregion

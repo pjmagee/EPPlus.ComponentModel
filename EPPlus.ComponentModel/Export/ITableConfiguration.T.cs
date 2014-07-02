@@ -34,14 +34,14 @@ namespace EPPlus.ComponentModel.Export
     /// </summary>
     /// <typeparam name="T">
     /// </typeparam>
-    public interface ITableConfiguration<T> : IWorksheetNavigatable, IExportNavigatable, ITableConfiguration
+    public interface ITableConfiguration<T> : IExportNavigatable, ITableConfiguration
     {
         #region Public Properties
 
         /// <summary>
         /// Gets the options.
         /// </summary>
-        IObjectConfiguration<T> Options { get; }
+        new IObjectConfiguration<T> Options { get; }
 
         #endregion
     }
