@@ -46,6 +46,9 @@ namespace EPPlus.ComponentModel.Tests
     using MSTestExtensions;
 
     using OfficeOpenXml;
+    using OfficeOpenXml.DataValidation;
+    using OfficeOpenXml.DataValidation.Contracts;
+    using OfficeOpenXml.DataValidation.Formulas.Contracts;
 
     /// <summary>
     /// Exporting and Importing Tests Fixture
@@ -454,6 +457,57 @@ namespace EPPlus.ComponentModel.Tests
                 expected: totalOrders.Count(),
                 actual: allOrders.Count(),
                 message: "The total orders exported to two sheets do not add up to the total orders imported.");
+        }
+
+        [TestMethod]
+        [Description("Exporting one type with list validation on a property results in export having list validation on that property")]
+        [TestCategory("1 x Type"), TestCategory("2 x Table"), TestCategory("2 x Sheet"), TestCategory("1 x List Validation")]
+        public void Exporting_One_Type_List_Validation_Test()
+        {
+            // Arrange
+            byte[] data;
+            IEnumerable<Order> orders = Builder<Order>.CreateListOfSize(10).Build();
+            var options = Enumerable.Range(1, 10).Select(i => string.Format("Option {0}", i));
+            var sheet1 = exportService.AddSheetForExport("Sheet One");
+            var sheet1Table1 = sheet1.AddTableForExport(orders);
+
+            // Act
+            sheet1Table1.Options.AddListValidation(o => o.Reference, list =>
+                    {
+                        foreach (var option in options)
+                        {
+                            list.Formula.Values.Add(option);
+                        }
+                    });
+
+            data = exportService.Export(); // Now export our sheet with validation
+
+            // Assert
+            using (var package = new ExcelPackage(new MemoryStream(data)))
+            {
+                var workSheet = package.Workbook.Worksheets["Sheet One"];
+                var table = workSheet.Tables[sheet1Table1.TableName];
+                var column = table.Columns["Reference"].Position + 1;
+                var range = workSheet.Cells[table.Address.Start.Row + 1, column, table.Address.End.Row, column];
+                var validation = workSheet.DataValidations.Find(v => v.Address.Address == range.Address) as IExcelDataValidationList;
+                
+                Assert.IsNotNull(
+                    value: validation);
+
+                Assert.AreEqual(
+                    expected: typeof(ExcelDataValidationList),
+                    actual: validation.GetType());
+
+                Assert.AreEqual(
+                    expected: options.Count(),
+                    actual: validation.Formula.Values.Count);
+
+                Assert.AreEqual(
+                    expected: 1, 
+                    actual: workSheet.DataValidations.Count);
+            }
+
+            this.SaveToFile(data);
         }
 
         [TestCleanup]

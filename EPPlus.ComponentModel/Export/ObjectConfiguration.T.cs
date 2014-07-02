@@ -436,7 +436,7 @@ namespace EPPlus.ComponentModel.Export
             var listValidation = new Action<Action<IExcelDataValidationList>>(
                 process =>
                     {
-                        var range = this.table.WorkSheet.Cells[this.StartRow + 1, index, this.EndRow, index];
+                        var range = this.table.WorkSheet.Cells[this.StartRow, index, this.EndRow, index];
                         var validation = range.DataValidation.AddListDataValidation();
                         process(validation);
                     });
