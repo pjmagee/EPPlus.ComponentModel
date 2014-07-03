@@ -174,7 +174,7 @@ namespace EPPlus.ComponentModel.Export
         /// </returns>
         public ITableConfiguration<T> AddTableForExport<T>(IEnumerable<T> collection, string tableName = null)
         {
-            var key = this.GetKey<T>(tableName ?? string.Empty);
+            var key = this.GetKey(tableName ?? string.Empty, typeof(T));
             var rangeToFill = this.GetRangeToFill();
             var dataTable = collection.ToDataTable(key);
             rangeToFill.LoadFromDataTable(dataTable, PrintHeaders: true, TableStyle: TableStyles.Dark1);
@@ -215,8 +215,7 @@ namespace EPPlus.ComponentModel.Export
         private ExcelRange GetRangeToFill()
         {
             var isEmpty = this.worksheet.Dimension == null;
-            this.worksheet.InsertRow(isEmpty ? 1 : this.worksheet.Dimension.End.Row, 2);
-            return this.worksheet.Cells[isEmpty ? 1 : this.worksheet.Dimension.End.Row, 1];
+            return this.worksheet.Cells[isEmpty ? 1 : this.worksheet.Dimension.End.Row + 2, 1];
         }
 
         /// <summary>
@@ -232,14 +231,13 @@ namespace EPPlus.ComponentModel.Export
         /// </returns>
         /// <exception cref="ArgumentNullException">
         /// </exception>
-        public string GetKey<T>(string tableName)
+        public string GetKey(string tableName, Type type)
         {
             if (tableName == null)
             {
                 throw new ArgumentNullException("tableName");
             }
 
-            var type = typeof(T);
             var count = 1;
 
             if (!typeCount.ContainsKey(type))
