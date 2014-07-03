@@ -119,7 +119,7 @@ namespace EPPlus.ComponentModel.Export
         /// <returns>
         /// The <see cref="IObjectConfiguration"/>.
         /// </returns>
-        IObjectConfiguration<T> AddPropertySubstitue(Expression<Func<T, object>> selector, object substitute);
+        IObjectConfiguration<T> AddPropertySubstitute(Expression<Func<T, object>> selector, object substitute);
 
         /// <summary>
         /// The add property to ignore.

@@ -458,7 +458,7 @@ namespace EPPlus.ComponentModel.Export
         /// <returns>
         /// The <see cref="IObjectConfiguration"/>.
         /// </returns>
-        public IObjectConfiguration<T> AddPropertySubstitue(Expression<Func<T, object>> selector, object substitute)
+        public IObjectConfiguration<T> AddPropertySubstitute(Expression<Func<T, object>> selector, object substitute)
         {
             var property = this.GetProperty(selector);
             this.propertySubstitutes[property] = substitute;
