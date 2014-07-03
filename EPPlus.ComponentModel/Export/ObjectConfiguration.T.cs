@@ -134,7 +134,7 @@ namespace EPPlus.ComponentModel.Export
         /// </summary>
         private ObjectConfiguration()
         {
-            this.typeProperties = typeof(T).GetProperties().ToArray();
+            this.typeProperties = typeof(T).GetProperties();
             this.printHeaders = false;
             this.ignoredproperties = new List<PropertyInfo>();
             this.propertySubstitutes = new Dictionary<PropertyInfo, object>();
@@ -361,11 +361,11 @@ namespace EPPlus.ComponentModel.Export
             var index = this.GetPropertyIndex(property);
 
             var decimalValidation = new Action<Action<IExcelDataValidationDecimal>>(
-                process =>
+                callback =>
                     {
                         var range = this.table.WorkSheet.Cells[this.StartRow + 1, index, this.EndRow, index];
                         var validation = range.DataValidation.AddDecimalDataValidation();
-                        process(validation);
+                        callback(validation);
                     });
 
             this.decimalValidators[property] = Tuple.Create(decimalValidation, action);
@@ -405,11 +405,11 @@ namespace EPPlus.ComponentModel.Export
             var index = this.GetPropertyIndex(property);
 
             var integerValidation = new Action<Action<IExcelDataValidationInt>>(
-                process =>
+                callback =>
                     {
                         var range = this.table.WorkSheet.Cells[this.StartRow + 1, index, this.EndRow, index];
                         var validation = range.DataValidation.AddIntegerDataValidation();
-                        process(validation);
+                        callback(validation);
                     });
 
             this.integerValidations[property] = Tuple.Create(integerValidation, action);
@@ -434,11 +434,11 @@ namespace EPPlus.ComponentModel.Export
             var index = this.GetPropertyIndex(property);
 
             var listValidation = new Action<Action<IExcelDataValidationList>>(
-                process =>
+                callback =>
                     {
                         var range = this.table.WorkSheet.Cells[this.StartRow, index, this.EndRow, index];
                         var validation = range.DataValidation.AddListDataValidation();
-                        process(validation);
+                        callback(validation);
                     });
 
             this.listValidations[property] = Tuple.Create(listValidation, action);

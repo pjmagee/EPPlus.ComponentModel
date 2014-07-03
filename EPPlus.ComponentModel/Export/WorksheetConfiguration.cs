@@ -31,11 +31,8 @@ namespace EPPlus.ComponentModel.Export
 {
     using System;
     using System.Collections.Generic;
-    using System.Data;
     using System.Data.Entity.Design.PluralizationServices;
     using System.Globalization;
-    using System.Linq;
-    using System.Reflection;
 
     using EPPlus.ComponentModel.Common;
 
@@ -178,12 +175,9 @@ namespace EPPlus.ComponentModel.Export
         public ITableConfiguration<T> AddTableForExport<T>(IEnumerable<T> collection, string tableName = null)
         {
             var key = this.GetKey<T>(tableName ?? string.Empty);
-            var rangeToFill = this.GetRangeToFill<T>();
+            var rangeToFill = this.GetRangeToFill();
             var dataTable = collection.ToDataTable(key);
-
-            // Load from dataTable will set the table name from the table name set on the dataTable
-            var filledRange = rangeToFill.LoadFromDataTable(dataTable, PrintHeaders: true, TableStyle: TableStyles.Dark1);
-            FormatDates(filledRange, dataTable);
+            rangeToFill.LoadFromDataTable(dataTable, PrintHeaders: true, TableStyle: TableStyles.Dark1);
             var table = worksheet.Tables[key];
             return this.CreateTableConfiguration<T>(table);
         }
@@ -191,16 +185,6 @@ namespace EPPlus.ComponentModel.Export
         #endregion
 
         #region Methods
-
-        private void FormatDates(ExcelRangeBase range, DataTable table)
-        {
-            var columns = from DataColumn d in table.Columns where d.DataType == typeof(DateTime) || d.ColumnName.Contains("Date") select d.Ordinal + 1;
-
-            foreach (var column in columns)
-            {
-                worksheet.Cells[range.Start.Row + 1, column, range.End.Row, column].Style.Numberformat.Format = "dd/mm/yyyy";
-            }
-        }
 
         /// <summary>
         /// The create table configuration.
@@ -228,7 +212,7 @@ namespace EPPlus.ComponentModel.Export
         /// <returns>
         /// The <see cref="ExcelRange"/> that is to be filled from a collection or datatable.
         /// </returns>
-        private ExcelRange GetRangeToFill<T>()
+        private ExcelRange GetRangeToFill()
         {
             var isEmpty = this.worksheet.Dimension == null;
             this.worksheet.InsertRow(isEmpty ? 1 : this.worksheet.Dimension.End.Row, 2);
@@ -270,7 +254,7 @@ namespace EPPlus.ComponentModel.Export
 
             tableName = tableName.Replace(" ", "_");
             var sheetName = WorksheetName.Replace(" ", "_");
-            var plural = pluralizationService.Pluralize(typeof(T).Name);
+            var plural = pluralizationService.Pluralize(type.Name);
 
             return string.Format("{0}_{1}_{2}_{3}", sheetName, tableName, plural, count).Replace("__", "_");
         }

@@ -48,7 +48,6 @@ namespace EPPlus.ComponentModel.Tests
     using OfficeOpenXml;
     using OfficeOpenXml.DataValidation;
     using OfficeOpenXml.DataValidation.Contracts;
-    using OfficeOpenXml.DataValidation.Formulas.Contracts;
 
     /// <summary>
     /// Exporting and Importing Tests Fixture
@@ -344,7 +343,7 @@ namespace EPPlus.ComponentModel.Tests
         {
             // Arrange
             byte[] data;
-            var firstOrders = Builder<Order>.CreateListOfSize(10).All().Do(order => order.Reference = "FIRST ORDER").Build();
+            var firstOrders = Builder<Order>.CreateListOfSize(10).All().Do(order => order.Reference = "FIRST ORDER").Do(o => o.DateCreated = DateTime.Now).Build();
             var secondOrders = Builder<Order>.CreateListOfSize(10).All().Do(order => order.Reference = "SECOND ORDER").Build();
             var thirdOrders = Builder<Order>.CreateListOfSize(10).All().Do(order => order.Reference = "THIRD ORDER").Build();
 

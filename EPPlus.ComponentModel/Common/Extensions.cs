@@ -90,7 +90,6 @@ namespace EPPlus.ComponentModel.Common
 
             foreach (var property in properties)
             {
-                // Adding metadata here can change the way EPPlus will fill in the cells.
                 dataTable.Columns.Add(property.Name);
             }
 
@@ -100,7 +99,7 @@ namespace EPPlus.ComponentModel.Common
 
                 foreach (var property in properties)
                 {
-                    dataRow[property.Name] = property.GetValue(item).ToString();
+                    dataRow[property.Name] = property.GetValue(item);
                 }
 
                 dataTable.Rows.Add(dataRow);

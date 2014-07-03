@@ -38,7 +38,7 @@ namespace EPPlus.ComponentModel.Export
     /// </summary>
     /// <typeparam name="T">
     /// </typeparam>
-    public class TableConfiguration<T> : ITableConfiguration<T>, ITableConfiguration
+    public class TableConfiguration<T> : ITableConfiguration<T>
     {
         #region Fields
 
