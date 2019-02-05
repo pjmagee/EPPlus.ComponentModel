@@ -1,7 +1,7 @@
-EPPlus.ComponentModel
+EPPlus.Entities
 =====================
 
-EPPlus.ComponentModel is an experimental framework that sits on top of EPPlus for serialising and de serialising collections of objects to and from tables in spreadsheets using excel, including the options of adding validation rules defined using EPPlus validation.
+EPPlus.Entities is an experimental framework that sits on top of EPPlus for serialising and de serialising collections of objects to and from tables in spreadsheets using excel, including the options of adding validation rules defined using EPPlus validation.
 
 [![Build status](https://ci.appveyor.com/api/projects/status/9alfvvy4uemocn9k)](https://ci.appveyor.com/project/pjmagee/epplus-componentmodel)
 
